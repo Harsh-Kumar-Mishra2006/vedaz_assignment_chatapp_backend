@@ -424,6 +424,4 @@ socket.io
 
 **Harsh Kumar Mishra**
 
-Backend Developer
-
 Built using **Node.js**, **Express.js**, **MongoDB**, and **Socket.IO**.
