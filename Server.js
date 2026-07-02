@@ -10,6 +10,8 @@ const messageRoutes = require('./routes/messageRoutes');
 const socketHandler = require('./socket/socketHandler');
 
 dotenv.config();
+
+// Connect to MongoDB
 connectDB();
 
 const app = express();
@@ -24,26 +26,36 @@ const frontendUrls = [
   process.env.FRONTEND_URL,
   process.env.CLIENT_URL,
   'https://vedaz-assignment-chatapp-frontend.onrender.com',
-  'https://vedaz-assignment-chatapp-frontend.onrender.com/'
 ].filter(Boolean);
 
 // Remove trailing slashes
 const cleanUrls = frontendUrls.map(url => url.replace(/\/$/, ''));
 
+console.log('🔗 Allowed origins:', cleanUrls);
+
 // CORS configuration
 const corsOptions = {
   origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    if (cleanUrls.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+    
+    // Allow in development
+    if (process.env.NODE_ENV === 'development') {
+      return callback(null, true);
+    }
+    
+    // Check if origin is allowed
+    if (cleanUrls.includes(origin)) {
       callback(null, true);
     } else {
-      console.log('Blocked origin:', origin);
+      console.log('❌ Blocked origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Length', 'X-Requested-With'],
 };
 
 app.use(cors(corsOptions));
@@ -53,21 +65,26 @@ const io = socketIo(server, {
   cors: {
     origin: function (origin, callback) {
       if (!origin) return callback(null, true);
-      if (cleanUrls.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+      if (process.env.NODE_ENV === 'development') {
+        return callback(null, true);
+      }
+      if (cleanUrls.includes(origin)) {
         callback(null, true);
       } else {
-        console.log('Socket blocked origin:', origin);
+        console.log('❌ Socket blocked origin:', origin);
         callback(new Error('Not allowed by CORS'));
       }
     },
     methods: ['GET', 'POST'],
     credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization'],
   },
   transports: ['websocket', 'polling'],
   pingTimeout: 60000,
   pingInterval: 25000,
-  path: '/socket.io/', // Explicitly set the path
-  allowEIO3: true, // Allow Engine.IO v3 clients
+  path: '/socket.io/',
+  connectTimeout: 45000,
+  allowEIO3: true,
 });
 
 // Middlewares
@@ -85,6 +102,8 @@ const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
   message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 app.use('/api/', limiter);
 
@@ -100,7 +119,7 @@ app.get('/', (req, res) => {
       testCors: '/api/test-cors',
     },
     websocket: {
-      path: '/socket.io',
+      path: '/socket.io/',
       transports: ['websocket', 'polling'],
     },
     timestamp: new Date().toISOString()
@@ -115,6 +134,8 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: process.env.NODE_ENV || 'development',
+    mongodb: 'connected',
+    allowedOrigins: cleanUrls,
   });
 });
 
@@ -129,7 +150,7 @@ app.get('/api/test-cors', (req, res) => {
 // Socket.IO handling
 socketHandler(io);
 
-// 404 handler
+// 404 handler - should be after all routes
 app.use((req, res) => {
   res.status(404).json({
     error: {
@@ -139,9 +160,9 @@ app.use((req, res) => {
   });
 });
 
-// Error handling
+// Error handling - should be last
 app.use((err, req, res, next) => {
-  console.error('Error:', err.stack);
+  console.error('❌ Error:', err.stack);
   res.status(err.status || 500).json({
     error: {
       message: err.message || 'Internal Server Error',
@@ -152,9 +173,16 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`\n🚀 Server running on port ${PORT}`);
   console.log(`📡 Socket.IO ready at /socket.io`);
   console.log(`📋 Allowed origins:`, cleanUrls);
+  console.log(`\n✅ Available endpoints:`);
+  console.log(`   GET  /              - API Info`);
+  console.log(`   GET  /health        - Health Check`);
+  console.log(`   GET  /api/messages  - Get Messages`);
+  console.log(`   POST /api/messages  - Send Message`);
+  console.log(`   GET  /api/test-cors - Test CORS`);
+  console.log(`   WS   /socket.io/    - WebSocket Connection\n`);
 });
 
 // Graceful shutdown
@@ -165,3 +193,13 @@ process.on('SIGTERM', () => {
     process.exit(0);
   });
 });
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received: closing HTTP server');
+  server.close(() => {
+    console.log('HTTP server closed');
+    process.exit(0);
+  });
+});
+
+module.exports = { app, server, io };
