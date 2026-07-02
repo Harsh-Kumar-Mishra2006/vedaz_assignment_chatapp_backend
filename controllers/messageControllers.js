@@ -1,3 +1,4 @@
+//controllers/messageControllers.js
 const Message = require('../models/Message');
 
 // Get all messages
@@ -20,7 +21,7 @@ const getMessages = async (req, res) => {
   }
 };
 
-// Save a new message (REST API fallback)
+// Save a new message
 const saveMessage = async (req, res) => {
   try {
     const { username, message, userId } = req.body;

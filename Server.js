@@ -1,3 +1,4 @@
+// Server.js
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
@@ -10,8 +11,6 @@ const messageRoutes = require('./routes/messageRoutes');
 const socketHandler = require('./socket/socketHandler');
 
 dotenv.config();
-
-// Connect to MongoDB
 connectDB();
 
 const app = express();
@@ -23,7 +22,7 @@ const io = socketIo(server, {
   }
 });
 
-// Middleware
+// Middlewares
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
