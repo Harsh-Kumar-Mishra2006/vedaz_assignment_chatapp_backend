@@ -1,3 +1,4 @@
+//server.js
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
@@ -17,10 +18,9 @@ connectDB();
 const app = express();
 const server = http.createServer(app);
 
-// Get frontend URLs from environment
 const frontendUrls = [
   'http://localhost:3000',
-  'http://localhost:5173', // Vite default
+  'http://localhost:5173', 
   'http://127.0.0.1:3000',
   'http://127.0.0.1:5173',
   process.env.FRONTEND_URL,
@@ -28,27 +28,23 @@ const frontendUrls = [
   'https://vedaz-assignment-chatapp-frontend.onrender.com',
 ].filter(Boolean);
 
-// Remove trailing slashes
 const cleanUrls = frontendUrls.map(url => url.replace(/\/$/, ''));
 
-console.log('🔗 Allowed origins:', cleanUrls);
+console.log('Allowed origins:', cleanUrls);
 
 // CORS configuration
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
-    // Allow in development
+
     if (process.env.NODE_ENV === 'development') {
       return callback(null, true);
     }
     
-    // Check if origin is allowed
     if (cleanUrls.includes(origin)) {
       callback(null, true);
     } else {
-      console.log('❌ Blocked origin:', origin);
+      console.log('Blocked origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -71,7 +67,7 @@ const io = socketIo(server, {
       if (cleanUrls.includes(origin)) {
         callback(null, true);
       } else {
-        console.log('❌ Socket blocked origin:', origin);
+        console.log('Blocked origin:', origin);
         callback(new Error('Not allowed by CORS'));
       }
     },
@@ -150,7 +146,7 @@ app.get('/api/test-cors', (req, res) => {
 // Socket.IO handling
 socketHandler(io);
 
-// 404 handler - should be after all routes
+// 404 handler 
 app.use((req, res) => {
   res.status(404).json({
     error: {
@@ -160,9 +156,9 @@ app.use((req, res) => {
   });
 });
 
-// Error handling - should be last
+// Error handling 
 app.use((err, req, res, next) => {
-  console.error('❌ Error:', err.stack);
+  console.error('Error:', err.stack);
   res.status(err.status || 500).json({
     error: {
       message: err.message || 'Internal Server Error',
@@ -173,10 +169,10 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`\n🚀 Server running on port ${PORT}`);
-  console.log(`📡 Socket.IO ready at /socket.io`);
-  console.log(`📋 Allowed origins:`, cleanUrls);
-  console.log(`\n✅ Available endpoints:`);
+  console.log(`\n Server running on port ${PORT}`);
+  console.log(` Socket.IO ready at /socket.io`);
+  console.log(` Allowed origins:`, cleanUrls);
+  console.log(`\n Available endpoints:`);
   console.log(`   GET  /              - API Info`);
   console.log(`   GET  /health        - Health Check`);
   console.log(`   GET  /api/messages  - Get Messages`);
