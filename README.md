@@ -106,7 +106,7 @@ backend/
 Clone the repository
 
 ```bash
-git clone <repository-url>
+git clone <https://github.com/Harsh-Kumar-Mishra2006/vedaz_assignment_chatapp_backend>
 ```
 
 Move inside backend
@@ -123,31 +123,6 @@ npm install
 
 ---
 
-# 📄 Environment Variables
-
-Create a `.env` file inside the backend directory.
-
-```env
-PORT=3000
-
-MONGODB_URI=your_mongodb_connection_string
-```
-
-Example
-
-```env
-PORT=3000
-MONGODB_URI=mongodb://localhost:27017/chat_app
-```
-
-or
-
-```env
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/chat_app
-```
-
----
-
 # ▶️ Running the Server
 
 Using Node
@@ -159,13 +134,13 @@ node Server.js
 Using Nodemon
 
 ```bash
-npx nodemon Server.js
+nodemon Server.js
 ```
 
 Expected Output
 
 ```
-✅ MongoDB connected successfully
+MongoDB connected successfully
 
 Server running on port 3000
 
@@ -440,12 +415,8 @@ socket.io
 - Message Deletion
 - Media/File Sharing
 - Image Upload Support
-- User Presence Tracking
-- Socket Authentication
 - Redis Adapter for Horizontal Scaling
 - Docker Support
-- Unit & Integration Testing
-- Deployment using Render / Railway / AWS
 
 ---
 
